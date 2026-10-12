@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mssql-deploy
+  labels:
+    name: mssql-deploy
+    app: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app
+      name: mssql-pod
+  template:
+    metadata:
+      labels:
+        app: app
+        name: mssql-pod
+    spec:
+      containers:
+        - name: mssql
+          image: mcr.microsoft.com/mssql/server:2022-latest
+          ports:
+            - containerPort: 1433
+          resources:
+            # SQL Server no arranca con menos de 2 GB de RAM.
+            requests:
+              cpu: 250m
+              memory: 2Gi
+            limits:
+              cpu: "1"
+              memory: 4Gi
+          env:
+            - name: ACCEPT_EULA
+              value: "Y"
+            - name: MSSQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netkubernetes-secrets
+                  key: sa-password

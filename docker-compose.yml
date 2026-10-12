@@ -1,0 +1,32 @@
+# Levanta la API y SQL Server juntos para probar en local.
+#
+#   cp .env.example .env    # y edita los valores
+#   docker compose up --build
+#
+# Swagger queda en http://localhost:5000/swagger
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: netkubernetes-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?define MSSQL_SA_PASSWORD en .env}
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql-data:/var/opt/mssql
+
+  api:
+    build: .
+    container_name: netkubernetes-api
+    depends_on:
+      - sqlserver
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__SQLServerConnection: "Data Source=sqlserver;Initial Catalog=InmuebleDB;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True"
+      Jwt__Key: ${JWT_KEY:?define JWT_KEY en .env}
+    ports:
+      - "5000:5000"
+
+volumes:
+  mssql-data:
